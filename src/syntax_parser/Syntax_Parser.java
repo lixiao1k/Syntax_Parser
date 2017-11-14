@@ -1,9 +1,16 @@
+package syntax_parser;
+
+import lexical_analyzer.LogicHelper;
+import lexical_analyzer.Token;
+import sun.jvm.hotspot.utilities.Assert;
+
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class Syntax_Parser{
 
-    private String input_path = "input.txt";//表达式输入文件
+//    private String input_path = "input.txt";//表达式输入文件
 
     private char[] input_char_list;//存放输入表达式的字符
     private Stack<Character> stack = new Stack<>();//文法符号序列栈
@@ -55,9 +62,9 @@ public class Syntax_Parser{
         }
     }
 
-    public Syntax_Parser(){
+    public Syntax_Parser(ArrayList<Token> tokens){
         try {
-            initData();
+            initData(tokens);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,19 +78,28 @@ public class Syntax_Parser{
         }
     }
 
-    private void initData() throws IOException {
-        //读入输入文件，初始化输入字符列表
-        File file = new File(input_path);
-        FileReader fileReader = new FileReader(file);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
+    private void initData(ArrayList<Token> tokens) throws IOException {
         String s = "";
-        String temp;
-        while ((temp = bufferedReader.readLine())!=null){
-            s+=temp;
+        Token token;
+        //将tokens转化为文法符号的字符串
+        for(int i = 0;i<tokens.size();i++){
+            token = (Token) tokens.get(i);
+            String name = token.getName();
+            if(name.equals("INT")){
+                s += "i";
+            }else if(name.equals("LEFT")){
+                s += "(";
+            }else if(name.equals("RIGHT")){
+                s += ")";
+            }else if(name.equals("OPERATOR")){
+                s += token.getValue();
+            }else{
+                error();
+                assert false;
+            }
         }
-        s =  s + '$';//输入字符串尾部加结束符
+        s = s + "$";//字符串的末尾加结束标识
         input_char_list = s.toCharArray();
-        bufferedReader.close();
         //文法符号栈在初始化时栈底为'$'，在上一层为开始符'E'
         stack.push('$');
         stack.push('E');
@@ -123,9 +139,9 @@ public class Syntax_Parser{
             }
         }
         if(suceess){
-            System.out.println("解析成功！");
+            System.out.println("语法解析成功！");
         }else {
-            System.out.println("解析失败！");
+            System.out.println("语法解析失败！");
         }
     }
 
@@ -134,7 +150,9 @@ public class Syntax_Parser{
     }
 
     public static void main(String args[]){
-        Syntax_Parser syntax_parser = new Syntax_Parser();
+        LogicHelper logicHelper = new LogicHelper();
+        ArrayList<Token> tokens = logicHelper.run();
+        Syntax_Parser syntax_parser = new Syntax_Parser(tokens);
         syntax_parser.parser();
     }
 }
